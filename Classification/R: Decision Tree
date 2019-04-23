@@ -1,0 +1,452 @@
+#=====================================================================================================================
+#    ___  ___               _             _    _              
+#   |  \/  |              | |           | |  | |              
+#   | .  . |  __ _  _ __  | |__    __ _ | |_ | |_  __ _  _ __ 
+#  | |\/| | / _` || '_ \ | '_ \  / _` || __|| __|/ _` || '_ \ 
+#  | |  | || (_| || | | || | | || (_| || |_ | |_| (_| || | | | 
+#  \_|  |_/ \__,_||_| |_||_| |_| \__,_| \__| \__|\__,_||_| |_|
+#   _____
+#  | ___ \           (_)            | |  
+#  | |_/ /_ __  ___   _   ___   ___ | |_ 
+# |  __/| '__|/ _ \ | | / _ \ / __|| __|
+#| |   | |  | (_) || ||  __/| (__ | |_ 
+#\_|   |_|   \___/ | | \___| \___| \__|
+#                _/ |                 
+#               |__/  
+#=====================================================================================================================
+#88b           d88                          88                                                                       =
+#888b         d888                          88                                                                       =
+#88`8b       d8'88                          88                                                                       =
+#88 `8b     d8' 88  88       88  ,adPPYba,  88,dPPYba,   8b,dPPYba,   ,adPPYba,    ,adPPYba,   88,dPYba,,adPYba,     =
+#88  `8b   d8'  88  88       88  I8[    ""  88P'    "8a  88P'   "Y8  a8"     "8a  a8"     "8a  88P'   "88"    "8a    =
+#88   `8b d8'   88  88       88   `"Y8ba,   88       88  88          8b       d8  8b       d8  88      88      88    =
+#88    `888'    88  "8a,   ,a88  aa    ]8I  88       88  88          "8a,   ,a8"  "8a,   ,a8"  88      88      88    =
+#88     `8'     88   `"YbbdP'Y8  `"YbbdP"'  88       88  88           `"YbbdP"'    `"YbbdP"'   88      88      88    =
+#======================== HOW TO BETTER UNDERSTAND R LANGUAGE, FROM ZERO TO COGNITIVE ================================
+
+#@@@@@@@@@@ MANHATTAN PROJECT NOTES @@@@@@@@@@ 
+#A SIMPLE GUIDE TO UNDERSTAND R
+#if (expr_1) expr_2 else expr_3
+#for (name in expr_1) expr_2
+#while (condition) expr
+
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#@@@@@@@@@@@@@@@@@@@ BEGIN OF THE R SCRIPT @@@@@@@@@@@@@@@@@@
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+install.packages("xgboost")
+install.packages("gplots")
+install.packages("stats")
+library(ROCR)
+library(gplots)
+library(rpart)
+library(e1071)
+library(neuralnet)
+library(xgboost)
+library(dummies)
+
+#FIRST OF ALL WE HAVE TO SETTING THE WORKING DIRECTORY (IT MUST EXIST YET)
+setwd("******")
+
+#LOAD MUSHROOM CSV AND TRANSFORM IT INTO DATAFRAME (STRUCTURE DATA USED BY R)
+MushroomsDataset = read.csv("mushrooms.csv",header=T,na.strings = "?")
+MushroomsFrame = data.frame(MushroomsDataset)
+N = nrow(MushroomsFrame) #NUMBER OF RECORDS
+
+#@@@@@@@@@@@@@@@@@@@@ DESCRIBE THE DATASET @@@@@@@@@@@@@@@@@@@@
+print(sprintf("Number of data rows: %d",nrow(MushroomsDataset)))
+print(sprintf("Number of data rows: %d",ncol(MushroomsDataset)))
+dim(MushroomsDataset)
+
+#chi square plot ?? associazione tra le variabili qualitative
+#variable worth (chi square percentage) cramer
+#classi variabili, target unaria multaria
+#pie chart
+# missing values
+# numero dei livelli
+# 
+
+
+#NAME OF THE 23 COLUMN ls() AND names() AND head() have got the same output
+names(MushroomsFrame)  #NAMES OF COLUMN (VARIABLES)
+str(MushroomsDataset) #TYPES OF COLUMN (FACTOR)
+class(MushroomsDataset) #RETURN TYPES OF VARIABLE (data.frame)
+head(MushroomsDataset) #THE FIRST 5 ENTRY FOR EACH VARIABLES
+tail(MushroomsDataset) #THE LAST 5 ENTRY FOR EACH VARIABLES
+summary(MushroomsDataset) #SUMMARY OF THE FIRST 5 ENTRY FOR EACH VARIABLES
+summary(MushroomsFrame$habitat) #SUMMARY OF THE VARIABLE HABITAT
+describe(MushroomsDataset$class) #DESCRIBE THE VARIABLE CLASS
+t(MushroomsDataset$class) #TRASPOST MATRIX OF VARIABLE CLASS
+levels(MushroomsDataset$class) #THE LEVELS ARE THE VALUE THAT THE VARIABLE ASSUME INTO THE COLUMN
+
+#FOR EACH VARIABLE, FOR EACH ENTRY, IT PRINTS TRUE IF THERE IS A NULL OR A MISSING VALUE AND FALSE IF THERE IS A VALUES
+is.na(MushroomsFrame)
+#BY THE WAY STALK ROOT HAS ABOUT 5000 REAL VALUES, THE OTHERS ARE "?" SO MISSING VALUES.
+
+#PLOT DISTRIBUTION SOME VARIABLE OF THE DATASET
+plot (MushroomsDataset$habitat)
+plot (MushroomsDataset$population)
+plot (MushroomsDataset$odor)
+plot (MushroomsDataset$ring.type)
+plot (MushroomsDataset$veil.color)
+plot (MushroomsDataset$stalk.root)
+
+MushroomsArray = array(1:23)
+
+for(i in MushroomsArray){
+  table(MushroomsFrame[i])
+}
+
+#FREQUENCY ANALYSYS (for each single column I create a variable that contains the frequency of the variable) 
+class = table(MushroomsFrame$class) #target variable (e = commestibile, p = velenoso)
+capShape = table(MushroomsFrame$cap.shape) #b = campana, c = conica, x = convessa, f = piatta, k = capezzolo, s = conica 
+capSurface = table(MushroomsFrame$cap.surface) #superficie del cappello fungino. f = fibroso, g = scalanato, s = liscio, y = squamoso
+capColor = table(MushroomsFrame$cap.color) #colore del cappello fungino. p = rosa, n = marrone, b = marrone chiaro, c = rosso cannella, g = grigio, r = verde, u = viola, e = rosso, w = bianco, y = giallo
+bruises = table(MushroomsFrame$bruises) #macchie. t = si, f = no
+odor = table(MushroomsFrame$odor) #odore. a = mandorlato, l = anice, c = creosoto (catramoso), y = odore di pesce, f = marcio, m = muffa, p = acre/forte, n = nessun odore, s = pungente
+gillAttachment = table(MushroomsFrame$gill.attachment) #attaccatura delle lamelle. a = attaccato, d = discendente, f = libero, n = intagliato
+gillSpacing = table(MushroomsFrame$gill.spacing) #spazio tra le lamelle. c = vicine, w = affollatte, d = distanti
+gillSize = table(MushroomsFrame$gill.size) #grandezza delle lamelle. n = strette, b = ampie
+gillColor = table(MushroomsFrame$gill.color) #colore lamelle. k = nero, n = marrone, b = marrone chiaro, h = marrone cioccolato, g = grigio, r = verde, o = arancio, p = rosa, u = viola, e = rosso, w = bianco, y = giallo
+stalkShape = table(MushroomsFrame$stalk.shape) #forma del gambo. e = largo, t = affusalato
+stalkRoot = table(MushroomsFrame$stalk.root) #base del gambo. b = bulbo, c = clava, u = coppa, e = equlibrata, z = rizomorfe, r = base radicata, ? = mancante
+stalkSurfaceAboveRing = table(MushroomsFrame$stalk.surface.above.ring) #gambo sopra l'anello. y = squamoso, f = fibroso, k = setoso, s = liscio
+stalkSurfaceBelowRing = table(MushroomsFrame$stalk.surface.below.ring) #gambo sotto l'anello. y = squamoso, f = fibroso, k = setoso, s = liscio
+stalkColorAboveRing = table(MushroomsFrame$stalk.color.above.ring) #colore del gambo sopra l'anello. n = marrone, b = marrone chiaro, c = rosso cannella, g = grigio, o = arancio, p = rosa, w = bianco, y = giallo
+stalkColorBelowRing = table(MushroomsFrame$stalk.color.below.ring) #colore del gambo sotto l'anello. n = marrone, b = marrone chiaro, c = rosso cannella, g = grigio, o = arancio, p = rosa, w = bianco, y = giallo
+veilType = table(MushroomsFrame$veil.type) #Vello del fungo only one value: p (plot(VeilType)). 
+veilColor = table(MushroomsFrame$veil.color) #Colore del vello. n = marrone, o = arancio, w = bianco, y = giallo
+ringNumber = table(MushroomsFrame$ring.number) #numero di anelli. n = nessuno, o = 1, t = 2
+ringType = table(MushroomsFrame$ring.type) #tipo di anello. c = a ragnatela o velato, e = evanescente, f = che si slarga, n = nessuno, l = largo, p = pendente, z = a zona, s = a cappuccio
+sporePrintColor = table(MushroomsFrame$spore.print.color) #colore delle spore. k = nero, n = marrone, b = marrone chiaro, h = marrone cioccolato, r = verde, o = arancio, u = viole, w = bianco, y = giallo
+population = table(MushroomsFrame$population) #popolazione. a = abbondante, c = a cluster, n = numerosi, s = disseminato, y = solitari, v = distinti
+habitat = table(MushroomsFrame$habitat) #habitat. g = erba, l = foglie, m = prati, p = sntieri, u = citt?? , d = legno, w = rifiuti
+
+#THE VARIABLE TARGET IS THE COLUMN CALLED "class", IT INDICATES IF A MUSHROOM IS
+#POISONED OR EDIBLE, WE USE THESE COLUMN AS THE TARGET VARIABLE AND WE CONFRONT IT WITH OTHER VARIABLES
+#CHECK HOW MANY VALUES POISONED AND EDIBLE HAS GOT OUR VARIABLE
+class = plyr::count(MushroomsDataset$class)
+print(sprintf("Edible: %d | Poisonous: %d | Percent of poisonous classes: %.1f%%",class$freq[1],class$freq[2], round(class$freq[1]/nrow(MushroomsDataset)*100,1)))
+pie(table(MushroomsFrame$class), col = c("purple","green3"))
+
+#THROUGH TABLE AND BARPLOT WE IDENTIFY WHICH ARE THE SIGNIFICANT VARIABLE FOR THE TARFET VARIABLE
+#CALCULATE THE TABLE OF THE FREQUENCY, PRINT A BARPLOT FOR IDENTIFY GRAPHICALLY IF THE VARIABLE IS RELEVANT FOR THE TARGET VALUE AND MADE A CHI SQUARE ANALISYS FOR IDENTIFY DEGREE OF FREEDOM (df), X-SQUARED, P VALUE FOR EACH VARIABLE
+freqClassShape = table(MushroomsFrame$class,MushroomsFrame$cap.shape)
+freqClassShapeRelative = table(MushroomsFrame$class,MushroomsFrame$cap.shape)/length(MushroomsFrame$class)
+barplot(freqClassShape,beside=TRUE,legend=TRUE, main = "CAP SHAPE", col=c("purple","green3"))
+chicap = chisq.test(freqClassShape)
+#STEP BY STEP MATRIX CHI SQUARE
+chicap$observed   # observed counts (same as M)
+chicap$expected   # expected counts under the null
+chicap$residuals  # Pearson residuals
+chicap$stdres     # standardized residuals
+#CALCULATE CHISQUARE TEST AND ASSOCIATION BETWEEN CLASS AND CAP.SHAPE
+Xscap = chicap$statistic
+Assoccap = sqrt(Xscap/N)
+Assoccap # 0.25 NO REGRESSION 
+Factor_capShape = factor(MushroomsFrame$cap.shape)
+Factor_capShape
+dummies_capShape = model.matrix(~Factor_capShape)
+dummies_capShape
+#MAKE CHECK WITH IF STATEMENT, THE ROWS MUST BE 8124
+nrow(dummies_capShape)
+
+freqClassSurface = table(MushroomsFrame$class,MushroomsFrame$cap.surface)
+barplot(freqClassSurface,beside=TRUE,legend=TRUE, main = "CAP SURFACE", col=c("purple","green3"))
+chiCSu = chisq.test(freqClassSurface)
+XsCSu = chiCSu$statistic
+AssocCSu = sqrt(XsCSu/N)
+AssocCSu # 0.20 NO REGRESSION
+Factor_capSurface = factor(MushroomsFrame$cap.surface)
+dummies_capSurface = model.matrix(~Factor_capSurface)
+dummies_capSurface
+nrow(dummies_capSurface)
+
+freqClasscolor = table(MushroomsFrame$class,MushroomsFrame$cap.color)
+barplot(freqClasscolor,beside=TRUE,legend=TRUE, main = "CAP COLOR", col=c("purple","green3"))
+chicol = chisq.test(freqClasscolor)
+XsCol = chicol$statistic
+AssocCol = sqrt(XsCol/N)
+AssocCol # 0.22 NO REGRESSION
+Factor_capColor = factor(MushroomsFrame$cap.color)
+dummies_capColor = model.matrix(~Factor_capColor)
+dummies_capColor
+nrow(dummies_capColor)
+
+freqClassBruise = table(MushroomsFrame$class,MushroomsFrame$bruise)
+barplot(freqClassBruise,beside=TRUE,legend=TRUE, main = "BRUISE", col=c("purple","green3"))
+chiCb = chisq.test(freqClassBruise)
+XsCb = chiCb$statistic
+AssocCb = sqrt(XsCb/N)
+AssocCb # 0.5 NO REGRESSION
+Factor_bruises = factor(MushroomsFrame$bruises)
+dummies_bruises = model.matrix(~Factor_bruises)
+dummies_bruises
+nrow(dummies_bruises)
+
+freqClassOdor = table(MushroomsFrame$class,MushroomsFrame$odor)
+barplot(freqClassOdor,beside=TRUE,legend=TRUE, main = "ODOR", col=c("purple","green3"))
+chiOd = chisq.test(freqClassOdor)
+XsOd = chiOd$statistic
+AssocOd = sqrt(XsOd/N)
+AssocOd # 0.97 REGRESSION
+Factor_odor = factor(MushroomsFrame$odor)
+dummies_odor = model.matrix(~Factor_odor)
+dummies_odor
+nrow(dummies_odor)
+
+freqClassGilla = table(MushroomsFrame$class,MushroomsFrame$gill.attachment)
+barplot(freqClassGilla,beside=TRUE,legend=TRUE, main = "GILL ATTACHMENT", col=c("purple","green3"))
+chiCg = chisq.test(freqClassGilla)
+XsCg = chiCg$statistic
+AssocCg = sqrt(XsCg/N)
+AssocCg # 0.13 NO REGRESSION
+Factor_gillAttachment = factor(MushroomsFrame$gill.attachment)
+dummies_gillAttachment = model.matrix(~Factor_gillAttachment)
+dummies_gillAttachment
+nrow(dummies_gillAttachment)
+
+freqClassGillspacing = table(MushroomsFrame$class,MushroomsFrame$gill.spacing)
+barplot(freqClassGillspacing,beside=TRUE,legend=TRUE, main = "GILL SPACING", col=c("purple","green3"))
+chiGsp = chisq.test(freqClassGillspacing)
+XsGsp = chiGsp$statistic
+AssocGsp = sqrt(XsGsp/N)
+AssocGsp # 0.35 NO REGRESSION
+Factor_gillSpacing = factor(MushroomsFrame$gill.spacing)
+dummies_gillSpacing = model.matrix(~Factor_gillSpacing)
+dummies_gillSpacing
+nrow(dummies_gillSpacing)
+
+freqClassGillsize = table(MushroomsFrame$class,MushroomsFrame$gill.size)
+barplot(freqClassGillsize,beside=TRUE,legend=TRUE, main = "GILL SIZE", col=c("purple","green3"))
+chiGs = chisq.test(freqClassGillsize)
+XsGs = chiGs$statistic
+AssocGs = sqrt(XsGs/N)
+AssocGs # 0.54 REGRESSION 
+Factor_gillSize = factor(MushroomsFrame$gill.size)
+dummies_gillSize = model.matrix(~Factor_gillSize)
+dummies_gillSize
+nrow(dummies_gillSize)
+
+freqClassGillcolor = table(MushroomsFrame$class,MushroomsFrame$gill.color)
+freqClassGillcolor
+barplot(freqClassGillcolor,beside=TRUE,legend=TRUE, main = "GILL COLOR", col=c("purple","green3"))
+chiGc = chisq.test(freqClassGillcolor)
+chiGc
+XsGc = chiGc$statistic
+AssocGc = sqrt(XsGc/N)
+AssocGc # 0.68 REGRESSION 
+Factor_gillColor = factor(MushroomsFrame$gill.color)
+dummies_gillColor = model.matrix(~Factor_gillColor)
+dummies_gillColor
+nrow(dummies_gillColor)
+
+freqClassSs = table(MushroomsFrame$class,MushroomsFrame$stalk.shape)
+barplot(freqClassSs,beside=TRUE,legend=TRUE, main = "STALK SHAPE", col=c("purple","green3"))
+chissss = chisq.test(freqClassSs)
+XsSsss = chissss$statistic
+AssocSsss = sqrt(XsSsss/N)
+AssocSsss # 0.10 NO REGRESSION
+Factor_stalkShape = factor(MushroomsFrame$stalk.shape)
+dummies_stalkShape = model.matrix(~Factor_stalkShape)
+dummies_stalkShape
+nrow(dummies_stalkShape)
+
+freqClassSr = table(MushroomsFrame$class,MushroomsFrame$stalk.root)
+barplot(freqClassSr,beside=TRUE,legend=TRUE, main = "STALK ROOT", col=c("purple","green3"))
+chisssr = chisq.test(freqClassSr)
+XsSssr = chisssr$statistic
+AssocSssr = sqrt(XsSssr/N)
+AssocSssr # 0.28 NO REGRESSION
+table(MushroomsFrame$stalk.root)
+
+Factor_stalkroot = factor(MushroomsFrame$stalk.root)
+dummies_stalkroot = model.matrix(~Factor_stalkroot)
+dummies_stalkroot
+nrow(dummies_stalkroot) #ERROR !!!!!!! ONLY 5644 ROWS
+
+freqClassSsar = table(MushroomsFrame$class,MushroomsFrame$stalk.surface.above.ring)
+barplot(freqClassSsar,beside=TRUE,legend=TRUE, main = "STALK SURFACE ABOVE RING", col=c("purple","green3"))
+chissar = chisq.test(freqClassSsar)
+XsSsar = chissar$statistic
+AssocSsar = sqrt(XsSsar/N)
+AssocSsar # 0.59 REGRESSION 
+Factor_stalkSurfaceAboveRing = factor(MushroomsFrame$stalk.surface.above.ring)
+dummies_stalkSurfaceAboveRing = model.matrix(~Factor_stalkSurfaceAboveRing)
+dummies_stalkSurfaceAboveRing
+nrow(dummies_stalkSurfaceAboveRing)
+
+freqClassSsbr = table(MushroomsFrame$class,MushroomsFrame$stalk.surface.below.ring)
+barplot(freqClassSsbr,beside=TRUE,legend=TRUE, main = "STALK SURFACE BELOW RING", col=c("purple","green3"))
+chissbr = chisq.test(freqClassSsbr)
+XsSsbr = chissbr$statistic
+AssocSsbr = sqrt(XsSsbr/N)
+AssocSsbr # 0.57 REGRESSION 
+Factor_stalkSurfaceBelowRing = factor(MushroomsFrame$stalk.color.below.ring)
+dummies_stalkSurfaceBelowRing = model.matrix(~Factor_stalkSurfaceBelowRing)
+dummies_stalkSurfaceBelowRing
+nrow(dummies_stalkSurfaceBelowRing)
+
+freqClassScar = table(MushroomsFrame$class,MushroomsFrame$stalk.color.above.ring)
+barplot(freqClassScar,beside=TRUE,legend=TRUE, main = "STALK COLOR ABOVE RING", col=c("purple","green3"))
+chiScar = chisq.test(freqClassScar)
+XsScar = chiScar$statistic
+AssocScar = sqrt(XsScar/N)
+AssocScar # 0.52 REGRESSION      
+Factor_stalkColorAboveRing = factor(MushroomsFrame$stalk.color.above.ring)
+dummies_stalkColorAboveRing = model.matrix(~Factor_stalkColorAboveRing)
+dummies_stalkColorAboveRing
+nrow(dummies_stalkColorAboveRing)
+
+freqClassScbr = table(MushroomsFrame$class,MushroomsFrame$stalk.color.below.ring)
+barplot(freqClassScbr,beside=TRUE,legend=TRUE, main = "STALK COLOR BELOW RING", col=c("purple","green3"))
+chiScbr = chisq.test(freqClassScbr)
+Xsscbr = chiScbr$statistic
+Assocscbr = sqrt(Xsscbr/N)
+Assocscbr # 0.51 REGRESSION
+Factor_stalkColorBelowRing = factor(MushroomsFrame$stalk.color.below.ring)
+dummies_stalkColorBelowRing = model.matrix(~Factor_stalkColorBelowRing)
+dummies_stalkColorBelowRing
+nrow(dummies_stalkColorBelowRing)
+
+freqClassVeil = table(MushroomsFrame$class,MushroomsFrame$veil.color)
+barplot(freqClassVeil,beside=TRUE,legend=TRUE, main = "VEIL COLOR", col=c("purple","green3"))
+chiVeil = chisq.test(freqClassVeil)
+XsVeil = chiVeil$statistic
+AssocVeil = sqrt(XsVeil/N)
+AssocVeil # 0.15 NO REGRESSION
+Factor_veilColor = factor(MushroomsFrame$veil.color)
+dummies_veilColor = model.matrix(~Factor_veilColor)
+dummies_veilColor
+nrow(dummies_veilColor)
+
+freqClassRingnumber = table(MushroomsFrame$class,MushroomsFrame$ring.number)
+barplot(freqClassRingnumber,beside=TRUE,legend=TRUE, main = "RING NUMBER", col=c("purple","green3"))
+chiRingn = chisq.test(freqClassRingnumber)
+XsRingn = chiRingn$statistic
+AssocRingn = sqrt(XsRingn/N)
+AssocRingn # 0.21 NO REGRESSION
+Factor_ringNumber = factor(MushroomsFrame$ring.number)
+dummies_ringNumber = model.matrix(~Factor_ringNumber)
+dummies_ringNumber
+nrow(dummies_ringNumber)
+
+freqClassRingtype = table(MushroomsFrame$class,MushroomsFrame$ring.type)
+barplot(freqClassRingtype,beside=TRUE,legend=TRUE, main = "RING TYPE", col=c("purple","green3"))
+chiRing = chisq.test(freqClassRingtype)
+XsRing = chiRing$statistic
+AssocRing = sqrt(XsRing/N)
+AssocRing # 0.60 REGRESSION
+Factor_Ringtype = factor(MushroomsFrame$ring.type)
+dummies_Ringtype = model.matrix(~Factor_Ringtype)
+dummies_Ringtype
+nrow(dummies_Ringtype)
+
+freqClassSpore = table(MushroomsFrame$class,MushroomsFrame$spore.print.color)
+barplot(freqClassSpore,beside=TRUE,legend=TRUE, main = "SPORE PRINT COLOR", col=c("purple","green3"))
+chiSpore = chisq.test(freqClassSpore)
+Xsspo = chiSpore$statistic
+AssocSpo = sqrt(Xsspo/N)
+AssocSpo # 0.75 REGRESSION
+Factor_Sporeprintcolor = factor(MushroomsFrame$spore.print.color)
+dummies_Sporeprintcolor = model.matrix(~Factor_Sporeprintcolor)
+dummies_Sporeprintcolor
+nrow(dummies_Sporeprintcolor)
+
+freqClassPopulation = table(MushroomsFrame$class,MushroomsFrame$population)
+barplot(freqClassPopulation,beside=TRUE,legend=TRUE, main = "POPULATION", col=c("purple","green3"))
+chiPopulation = chisq.test(freqClassPopulation)
+Xspop = chiPopulation$statistic
+AssocPop = sqrt(Xspop/N)
+AssocPop # 0.49 NO REGRESSION
+Factor_Population = factor(MushroomsFrame$population)
+dummies_Population = model.matrix(~Factor_Population)
+dummies_Population
+nrow(dummies_Population)
+
+freqClassHabitat = table(MushroomsFrame$class,MushroomsFrame$habitat)
+barplot(freqClassHabitat,beside=TRUE,legend=TRUE, main = "HABITAT", col=c("purple","green3"))
+chiHabitat = chisq.test(freqClassHabitat)
+XsHab = chiHabitat$statistic #X-SQUARED
+AssocHab = sqrt(XsHab/N)
+AssocHab # 0.44 NO REGRESSION
+Factor_habitat = factor(MushroomsFrame$habitat)
+Factor_habitat
+dummies_habitat = model.matrix(~Factor_habitat)
+dummies_habitat
+nrow(dummies_habitat)
+
+#TOTAL CHI SQUARE
+ChiPlot = c(AssocHab, AssocPop, AssocSpo, AssocRing, AssocRingn, AssocVeil, Assocscbr, AssocScar, AssocSsbr, AssocSsar, AssocSssr, AssocSsss, AssocGc, AssocGs, AssocGsp, AssocCg, AssocOd, AssocCb, AssocCol, AssocCSu, Assoccap)
+barplot(ChiPlot[order(ChiPlot,decreasing=TRUE)], xlab="Variables", ylab="Chi-Square", beside=TRUE, main= "Chi-Square Plot", col=c("purple"))
+
+#CREATE DAFRAME DUMMIES AND EXPORT IN CSV FOR SAS MINER
+MushroomsFrameDummies = data.frame(dummies_habitat,dummies_Population,dummies_Sporeprintcolor,dummies_Ringtype,dummies_ringNumber,dummies_veilColor,dummies_stalkColorBelowRing,dummies_stalkColorAboveRing,dummies_stalkSurfaceBelowRing,dummies_stalkSurfaceAboveRing,dummies_stalkShape,dummies_gillColor,dummies_gillSize,dummies_gillSpacing,dummies_gillAttachment,dummies_odor,dummies_bruises,dummies_capColor,dummies_capSurface,dummies_capShape)
+write.csv(MushroomsFrameDummies, file="MushroomsDummies.csv")
+
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#@@   TEST / TRAINING DUMMIES  @@@
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#FIRST OF ALL LET'S SEPARATE THE DATA INTO TRAIN DATA AND TEST DATA
+## 75% of the sample size
+smp_size <- floor(0.75 * nrow(MushroomsFrameDummies))
+
+## set the seed to make your partition reproducible
+set.seed(12345)
+train_ind <- sample(seq_len(nrow(MushroomsFrameDummies)), size = smp_size)
+
+MushroomsDummiesTrain <- MushroomsFrameDummies[train_ind, ] #CONTAINS TRAIN DATASET 
+MushroomsDummiesTest <- MushroomsFrameDummies[-train_ind, ] #CONTAINS TEST DATASET
+
+dim(MushroomsDummiesTrain)
+dim(MushroomsDummiesTest)
+class(MushroomsDummiesTrain)
+class(MushroomsDummiesTest)
+
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#@@   TEST / TRAINING QUALIT.  @@@
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#FIRST OF ALL LET'S SEPARATE THE DATA INTO TRAIN DATA AND TEST DATA
+## 75% of the sample size
+smp_size <- floor(0.75 * nrow(MushroomsFrame))
+
+## set the seed to make your partition reproducible
+set.seed(12345)
+train_ind <- sample(seq_len(nrow(MushroomsFrame)), size = smp_size)
+
+MushroomsTrain <- MushroomsFrame[train_ind, ] #CONTAINS TRAIN DATASET 
+MushroomsTest <- MushroomsFrame[-train_ind, ] #CONTAINS TEST DATASET
+
+dim(MushroomsTrain)
+dim(MushroomsTest)
+class(MushroomsTrain)
+class(MushroomsTest)
+
+#@@@@@@@@@@@@@@@@@@@@@@@@@
+#@@@@@ DECISION TREE @@@@@
+#@@@@@@@@@@@@@@@@@@@@@@@@@
+#DECISION TREE WITH ALL VARIABLES
+library(rpart)
+MushroomsTree = rpart(class ~ cap.shape + cap.surface + cap.color + bruises + odor + gill.attachment + gill.spacing + gill.size + gill.color + stalk.shape + stalk.root + stalk.surface.above.ring + stalk.surface.below.ring + stalk.color.above.ring + stalk.color.below.ring + veil.color + ring.number + ring.type + spore.print.color + population + habitat, data= MushroomsTrain, method="class")
+plot(MushroomsTree, uniform=TRUE,main="Classification Tree for Mushrooms")
+text(MushroomsTree, use.n=TRUE, all=TRUE, cex=.9)
+printcp(MushroomsTree)
+
+#DECISION TREE WITHOUT ODOR
+MushroomsTreeWithoutOdor = rpart(class ~ cap.shape + cap.surface + cap.color + bruises + gill.attachment + gill.spacing + gill.size + gill.color + stalk.shape + stalk.root + stalk.surface.above.ring + stalk.surface.below.ring + stalk.color.above.ring + stalk.color.below.ring + veil.color + ring.number + ring.type + spore.print.color + population + habitat, data= MushroomsTrain, method="class")
+plot(MushroomsTreeWithoutOdor, uniform=TRUE,main="Classification Tree for Mushrooms")
+text(MushroomsTreeWithoutOdor, use.n=TRUE, all=TRUE, cex=.8)
+printcp(MushroomsTreeWithoutOdor)
+
+#DECISION TREE WITHOUT ODOR AND SPORE.PRINT.COLOR 
+MushroomsTreeWithoutOdoreSpore = rpart(class ~ cap.shape + cap.surface + cap.color + bruises + gill.attachment + gill.spacing + gill.size + gill.color + stalk.shape + stalk.root + stalk.surface.above.ring + stalk.surface.below.ring + stalk.color.above.ring + stalk.color.below.ring + veil.color + ring.number + ring.type + population + habitat, data= MushroomsTrain, method="class")
+plot(MushroomsTreeWithoutOdoreSpore, uniform=TRUE,main="Classification Tree for Mushrooms")
+text(MushroomsTreeWithoutOdoreSpore, use.n=TRUE, all=TRUE, cex=.8)
+printcp(MushroomsTreeWithoutOdoreSpore)
+############################################################################################################
+#EOF
+############################################################################################################
